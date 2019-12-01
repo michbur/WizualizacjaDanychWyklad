@@ -51,6 +51,8 @@ Michał Burdukiewicz:
 
 Materiały: https://github.com/michbur/WizualizacjaDanychWyklad
 
+Mail: michalburdukiewicz@gmail.com
+
 ## Literatura
 
  - Wilkinson, L. (2005). The Grammar of Graphics (New York: Springer-Verlag).
