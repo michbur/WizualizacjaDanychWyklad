@@ -30,14 +30,44 @@ library(knitr)
 library(rgl)
 library(ggplot2)
 library(plotly)
-opts_chunk$set(echo = FALSE)
+library(dplyr)
+library(patchwork)
+library(ggthemes)
+opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 knit_hooks$set(webgl = hook_webgl)
-
+data("midwest", package = "ggplot2")
 options(scipen=999)  # turn-off scientific notation like 1e+48
 theme_set(theme_bw())  # pre-set the bw theme.
 ```
 
+## O mnie
+
+Michał Burdukiewicz:
+
+ - bioinformatyk (MiNI PW),
+ - 12 lat doświadczenia z R,
+ - Stowarzyszenie Wrocławskich Użytkowników R (stwur.pl),
+ - Fundacja Why R? (whyr.pl).
+
+Materiały: https://github.com/michbur/WizualizacjaDanychWyklad
+
+## Literatura
+
+ - Wilkinson, L. (2005). The Grammar of Graphics (New York: Springer-Verlag).
+ - Biecek, P. (2016). Zbiór esejów o sztuce prezentowania danych Odkrywać! Ujawniać! Objaśniać!” (Warszawa: Wydawnictwa Uniwersytetu Warszawskiego.
+ 
+## Plan spotkań
+
+1. Gramatyka grafiki.
+2. Błędy w wizualizacjach danych.
+3. Efektywne projektowanie dashboardów.
+4. Zaaawansowane wizualizacje danych.
+
 # Historia wizualizacji danych
+
+## Florence Nightingale
+
+<img src="https://miro.medium.com/max/4000/1*clS26a7EogOGMJvDD-SY_w.jpeg" width="600px" class="center">
 
 ## Standardy
 
@@ -49,42 +79,317 @@ Joint Committee on Standards for Graphic Presentation (1915). **Standards for Gr
 
 ## Gramatyka grafiki
 
-Gramatyka grafiki (grammar of graphics).
+Gramatyka grafiki (grammar of graphics): ustrukturyzowany opis wizualizacji danych.
 
-Wilkinson, Leland, Anushka Anand, and Robert Grossman. "Graph-theoretic scagnostics." IEEE Symposium on Information Visualization, 2005. INFOVIS 2005.. IEEE, 2005.
-
-## Gramatyka grafiki
-
-<img src="https://blog.gtwang.org/wp-content/uploads/2016/07/ggplot-grammar-of-graphics-stack-1.png" width="700px" class="center">
+Wilkinson, L. (2005). The Grammar of Graphics (New York: Springer-Verlag).
 
 ## Gramatyka grafiki
 
-<img src="https://cdn-images-1.medium.com/max/2000/1*mcLnnVdHNg-ikDbHJfHDNA.png" width="700px" class="center">
+<img src="https://blog.gtwang.org/wp-content/uploads/2016/07/ggplot-grammar-of-graphics-stack-1.png" width="600px" class="center">
+
+Źródło: https://blog.gtwang.org/
+
+## Atrybuty wizualne 
+
+Atrybuty wizualne (aesthetics): mapowanie danych do osi, kolorów, kształtów.
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) +
+  geom_point(size = 4)
+```
+
+## Atrybuty wizualne 
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) +
+  geom_point(size = 4)
+```
+
+**Oś X:** Sepal.Length.
+**Oś Y:** Petal.Length.
+
+## Atrybuty wizualne 
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+  geom_point(size = 4)
+```
+
+**Oś X:** Sepal.Length.
+**Oś Y:** Petal.Length.
+**Kolor:** Species.
+
+## Atrybuty wizualne 
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, shape = Species)) +
+  geom_point(size = 4)
+```
+
+**Oś X:** Sepal.Length.
+**Oś Y:** Petal.Length.
+**Kształt:** Species.
+
+## Atrybuty wizualne 
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, shape = Species)) +
+  geom_point(size = 4)
+```
+
+**Oś X:** Sepal.Length.
+**Oś Y:** Petal.Length.
+**Kształt:** Species.
+**Kolor:** Species.
+
+## Geometrie
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +
+  stat_summary(fun.y = "mean", geom = "point")
+```
+
+Geometrie: obiekty reprezentujące dane.
+
+## Geometrie
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +
+  stat_summary(fun.y = "mean", geom = "bar")
+```
+
+## Geometrie
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = 1, y = Sepal.Length, fill = Species)) +
+  stat_summary(fun.y = "mean", geom = "bar", position = "dodge") +
+  scale_x_continuous("") +
+  theme(axis.text.x = element_blank())
+```
+
+Orientacja obiektów geometrycznych wzgledem siebie też jest istotna.
+
+## Geometrie
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = 1, y = Sepal.Length, fill = Species)) +
+  stat_summary(fun.y = "mean", geom = "bar", position = "stack") +
+  scale_x_continuous("") +
+  theme(axis.text.x = element_blank())
+```
+
+## Fasety
+
+```{r, echo=FALSE,warning=FALSE}
+mutate(iris, 
+       Petal.Length = cut(Petal.Length, 
+                          breaks = c(min(Petal.Length), median(Petal.Length), max(Petal.Length)), 
+                          include.lowest = TRUE)) %>% 
+  ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species, shape = Species)) +
+  geom_point(size = 4) +
+  facet_wrap(~ Petal.Length, labeller = label_both)
+```
+
+Dzielenie wykresu na podwykresy w zależności od poziomu zmiennej dyskretnej. 
+
+## Fasety
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length)) +
+  geom_density() +
+  facet_wrap(~ Species)
+```
+
+## Statystyki
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length)) +
+  geom_density() +
+  facet_wrap(~ Species)
+```
+
+Transformacje danych w celu przypisania ich do atrybutów wizualnych.
+
+## Statystyki
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +
+  geom_boxplot()
+```
+
+## Statystyki
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, shape = Species)) +
+  geom_point(size = 4)
+```
+
+## Statystyki
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, fill = Species)) +
+  stat_density2d(aes(alpha = ..level..), geom = "polygon", color = "black")
+```
+
+## Koordynaty
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Species)) +
+  geom_bar() 
+```
+
+## Koordynaty
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Species)) +
+  geom_bar() +
+  coord_flip()
+```
+
+## Koordynaty
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = 1, fill = Species)) +
+  geom_bar() +
+  coord_polar("y", start = 0)
+```
+
+## Motyw
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, shape = Species)) +
+  geom_point(size = 4) 
+```
+
+## Motyw
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, shape = Species)) +
+  geom_point(size = 4) +
+  theme_economist() +
+  ggtitle("Theme: economist")
+```
+
+## Motyw
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, shape = Species)) +
+  geom_point(size = 4) +
+  theme_tufte() +
+  ggtitle("Theme: Tufte")
+```
+
+## Motyw
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, shape = Species)) +
+  geom_point(size = 4) +
+  theme_wsj() +
+  ggtitle("Theme: WSJ")
+```
+
+## Motyw
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, shape = Species)) +
+  geom_point(size = 4) +
+  theme_excel() +
+  ggtitle("Theme: Excel")
+```
+
+## Gramatyka grafiki
+
+| Nazwa                          | Przykłady                                              |
+|--------------------------------|--------------------------------------------------------|
+| Dane (data)                    |                                                        |
+| Atrybuty wizualne (aesthetics) | Osie, kolory, kształty, typy linii                     |
+| Geometrie (geometries)         | Linie, słupki, punkty                                  |
+| Fasety (facets)                | Podrysunki tworzone na podstawie dyskretnych zmiennych |
+| Statystyki (statistics)        | Średnie, mediany, kwantyle.                            |
+| Koordynaty (coordinates)       | Kartezjański, polarny                                  |
+| Motyw (theme)                  | Wygląd rysunku                                         |
 
 
-# Rodzaje wizualizacji
+## Przykłady
+
+```{r}
+set.seed(15390)
+dat <- droplevels(diamonds[sample(1L:nrow(diamonds), 100), ])
+```
+
+ - **cut**: cięcie
+ - **clarity**: czystość
+ - **color**: kolor
+ - **carat**: waga (w karatach)
+ - **price**: cena (USD)
+ 
+## Przykłady
+
+```{r}
+ggplot(dat, aes(x = cut, y = price)) +
+  geom_boxplot(outlier.color = NA) +
+  geom_point(position = "jitter") 
+```
+
+## Przykłady
+
+```{r}
+group_by(dat, cut, clarity) %>% 
+  summarise(count = length(price)) %>% 
+  ggplot(aes(x = cut, y = clarity, fill = count)) +
+  geom_tile(color = "black") +
+  scale_fill_gradient(low = "white", high = "black")
+```
+
+## Przykłady
+
+```{r}
+ggplot(dat, aes(x = carat, y = price, shape = clarity)) +
+  geom_point()
+```
+
+## Przykłady
+
+```{r}
+ggplot(dat, aes(x = carat, y = price, shape = cut)) +
+  geom_point() +
+  facet_wrap(~ clarity, labeller = label_both) 
+```
+
+## Przykłady
+
+```{r}
+ggplot(dat, aes(x = color)) +
+  geom_bar() +
+  facet_grid(cut ~ clarity, labeller = label_both) 
+```
+
+## Przykłady
+
+```{r}
+ggplot(dat, aes(x = price)) +
+  geom_histogram() +
+  facet_wrap(~ cut)
+```
+
+# Błędy w wizualizacjach 
 
 ## Rodzaje wizualizacji
 ```{r, echo=FALSE,warning=FALSE}
-ggplot(cbind(expand.grid(x = c("Statyczne", "Interaktywne"),
+ggplot(cbind(expand.grid(x = c("Statyczne\n", "Interaktywne\n"),
                          y = c("Pojedyncza wizualizacja", "Wiele wizualizacji")), 
-             software = c("")),
+             software = c("Wykres", "Interaktywny\nwykres", "Infografika", "Dashboard")),
        aes(x = x, y = y, label = software)) +
   geom_tile(fill = NA, color = "black") +
   geom_text()  +
   theme_void() +
   theme(axis.text = element_text(color = "black"))
 ```
-  
-1. Wizualizacje statyczne.
-3. Infografiki.
-2. Wizualizacje interaktywne.
-3. Dashboardy.
 
 ## Wizualizacja statyczna
 
 ```{r, echo=FALSE,warning=FALSE}
-data("midwest", package = "ggplot2")
+
 # midwest <- read.csv("http://goo.gl/G1K41K")  # bkup data source
 
 # Scatterplot
@@ -121,8 +426,14 @@ ggplotly(gg)
 
 ## Dashboardy
 
-<img src="https://cdnl.tblsft.com/sites/default/files/blog/dashboard_spacing_in_tableau_2.gif" width="800px">
+<img src="https://cdnl.tblsft.com/sites/default/files/blog/dashboard_spacing_in_tableau_2.gif" width="800px" class="center">
 
+## Stylizowanie wizualizacji
+
+1. Czcionki.
+2. Kolory.
+3. Dodatkowe elementy graficzne.
+4. Układ treści.
 
 ## Czcionki
 
@@ -132,32 +443,55 @@ ggplotly(gg)
 
 ## Czcionki
 
-<a href="https://cdn.dribbble.com/users/18730/screenshots/1593976/attachments/246597/full_pixels.png"><img src="https://cdn.dribbble.com/users/18730/screenshots/1593976/attachments/246597/full_pixels.png" width="700px"></a>
+<a href="https://cdn.dribbble.com/users/18730/screenshots/1593976/attachments/246597/full_pixels.png"><img src="https://cdn.dribbble.com/users/18730/screenshots/1593976/attachments/246597/full_pixels.png" width="700px" class="center"></a>
+
+## Czcionki
+
+Czcionki wykorzystywane przez Tableau są tak dobrane, aby zapewnić maksymalną czytelność przy małych rozmiarach. 
+
+<a href="https://help.tableau.com/current/pro/desktop/en-us/Img/format_font_best_practices.png"><img src="https://help.tableau.com/current/pro/desktop/en-us/Img/format_font_best_practices.png" width="150px" class="center"></a>
 
 ## Kolory
 
-<a href="https://venngage-wordpress.s3.amazonaws.com/uploads/2016/08/true-colors.png"><img src="https://venngage-wordpress.s3.amazonaws.com/uploads/2016/08/true-colors.png" width="700px"></a>
+<a href="https://venngage-wordpress.s3.amazonaws.com/uploads/2016/08/true-colors.png"><img src="https://venngage-wordpress.s3.amazonaws.com/uploads/2016/08/true-colors.png" width="700px" class="center"></a>
 
 ## Kolory
 
 Kolory mogą nawiązywać do treści wizualizacji...
 
-<a href="https://venngage-wordpress.s3.amazonaws.com/uploads/2015/10/6fb75103-db4f-4cb5-ab51-d61be9ea7b2d-1.png"><img src="https://venngage-wordpress.s3.amazonaws.com/uploads/2015/10/6fb75103-db4f-4cb5-ab51-d61be9ea7b2d-1.png" width="700px"></a>
+<a href="https://venngage-wordpress.s3.amazonaws.com/uploads/2015/10/6fb75103-db4f-4cb5-ab51-d61be9ea7b2d-1.png"><img src="https://venngage-wordpress.s3.amazonaws.com/uploads/2015/10/6fb75103-db4f-4cb5-ab51-d61be9ea7b2d-1.png" width="700px" class="center"></a>
 
 ## Kolory
 
-... ale schemat kolorystyczny powinien być utrzymany w całej infografice.
+... ale schemat kolorystyczny powinien być stosowany konsekwentnie.
 
-<a href="https://technofaq.org/wp-content/uploads/2015/04/Uber-Vs-Hailo-The-Battle-of-the-Taxi-Apps.jpg"><img src="https://technofaq.org/wp-content/uploads/2015/04/Uber-Vs-Hailo-The-Battle-of-the-Taxi-Apps.jpg" width="700px"></a>
+<a href="https://technofaq.org/wp-content/uploads/2015/04/Uber-Vs-Hailo-The-Battle-of-the-Taxi-Apps.jpg"><img src="https://technofaq.org/wp-content/uploads/2015/04/Uber-Vs-Hailo-The-Battle-of-the-Taxi-Apps.jpg" width="700px" class="center"></a>
 
-## Prostota
+## Kolory 
 
-Infografika może zawierać tylko jeden wykres, co nie przekłada się na łatwość jej zrozumienia.
+<a href="http://www.asawicki.info/files/Rules%20to%20Make%20Image%20Looking%20Good%20on%20Projector%201.jpg"><img src="http://www.asawicki.info/files/Rules%20to%20Make%20Image%20Looking%20Good%20on%20Projector%201.jpg" width="700px"></a>
 
-## Prostota
+Źródło: http://www.asawicki.info/
 
-<a href="http://s3.amazonaws.com/wp_media-prod/app/uploads/2015/09/24112730/Infographic_Design_Example_GOOD.jpeg"><img src="http://s3.amazonaws.com/wp_media-prod/app/uploads/2015/09/24112730/Infographic_Design_Example_GOOD.jpeg" width="700px"></a>
+## Kolory 
 
+<a href="http://www.asawicki.info/files/Rules%20to%20Make%20Image%20Looking%20Good%20on%20Projector%202.jpg"><img src="http://www.asawicki.info/files/Rules%20to%20Make%20Image%20Looking%20Good%20on%20Projector%202.jpg" width="700px"></a>
+
+Źródło: http://www.asawicki.info/
+
+## Kolory
+
+<a href="http://www.asawicki.info/files/Rules%20to%20Make%20Image%20Looking%20Good%20on%20Projector%203.jpg"><img src="http://www.asawicki.info/files/Rules%20to%20Make%20Image%20Looking%20Good%20on%20Projector%203.jpg" width="700px"></a>
+
+Źródło: http://www.asawicki.info/
+
+## Widzenie barwne
+
+https://www.color-blindness.com/coblis-color-blindness-simulator/
+
+## Kolory
+
+Tableau domyślnie dobiera palety kolorów (zarówno ilościowe jak i kategoryczne), które są łatwo rozróżnialne również dla osób z zaburzeniami widzenia barwnego.
 
 ## Grafiki
 
@@ -167,7 +501,15 @@ Elementy graficzne nawiązujące do treści wzmacniają przekaz i pozwalają lep
 
 <a href="http://s3.amazonaws.com/wp_media-prod/app/uploads/2015/09/24112845/Infographic_Design_Example_Captora.jpg"><img src="http://s3.amazonaws.com/wp_media-prod/app/uploads/2015/09/24112845/Infographic_Design_Example_Captora.jpg" width="700px"></a>
 
-# Błędy w wizualizacjach
+## Prostota
+
+Dashboard może zawierać tylko jeden wykres, co nie przekłada się na łatwość jej zrozumienia.
+
+## Prostota
+
+<a href="http://s3.amazonaws.com/wp_media-prod/app/uploads/2015/09/24112730/Infographic_Design_Example_GOOD.jpeg"><img src="http://s3.amazonaws.com/wp_media-prod/app/uploads/2015/09/24112730/Infographic_Design_Example_GOOD.jpeg" width="700px"></a>
+
+
 
 ## Złe wizualizacje
 
@@ -218,6 +560,54 @@ How to Lie with Statistics, Darrell Huff
 
 <img src="https://peltiertech.com/images/2011-11/Ybroken.png" width="600px">
 
+## Przykłady
+
+```{r}
+ggplot(dat, aes(x = cut, y = price)) +
+  geom_boxplot(outlier.color = NA) +
+  geom_point(position = "jitter") 
+```
+
+## Przykłady
+
+```{r}
+group_by(dat, cut, clarity) %>% 
+  summarise(count = length(price)) %>% 
+  ggplot(aes(x = cut, y = clarity, fill = count)) +
+  geom_tile(color = "black") +
+  scale_fill_gradient(low = "white", high = "black")
+```
+
+## Przykłady
+
+```{r}
+ggplot(dat, aes(x = carat, y = price, shape = clarity)) +
+  geom_point()
+```
+
+## Przykłady
+
+```{r}
+ggplot(dat, aes(x = carat, y = price, shape = cut)) +
+  geom_point() +
+  facet_wrap(~ clarity, labeller = label_both) 
+```
+
+## Przykłady
+
+```{r}
+ggplot(dat, aes(x = color)) +
+  geom_bar() +
+  facet_grid(cut ~ clarity, labeller = label_both) 
+```
+
+## Przykłady
+
+```{r}
+ggplot(dat, aes(x = price)) +
+  geom_histogram() +
+  facet_wrap(~ cut)
+```
 
 # Narzędzia do wizualizacji
 
@@ -230,7 +620,7 @@ How to Lie with Statistics, Darrell Huff
 ## Języki wizualizacji danych
 
 ```{r}
-ggplot(cbind(expand.grid(x = c("Imperatywne", "Deklaratywne"),
+ggplot(cbind(expand.grid(x = c("Imperatywne\n", "Deklaratywne\n"),
                          y = c("Proste do użycia", "Wszechstronne")), 
              software = c("Seaborn", "Bokeh\nR (ggplot2)\nLeaflet\nVega-Lite",  "Matplotlib\nR (base, grid)", "BQPlot\nD3\nPlotly\nVega")),
        aes(x = x, y = y, label = software)) +
@@ -311,6 +701,10 @@ https://matplotlib.org/
 Rozszerzenia: https://mpld3.github.io/
 
 ## plot.ly
+
+```{r, echo=FALSE,warning=FALSE}
+gg
+```
 
 ## seaborn
 
