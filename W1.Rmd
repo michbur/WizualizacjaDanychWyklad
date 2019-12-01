@@ -219,6 +219,22 @@ ggplot(iris, aes(x = Species, y = Sepal.Length)) +
   geom_boxplot()
 ```
 
+
+## Statystyki
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +
+  geom_violin()
+```
+
+## Statystyki
+
+```{r, echo=FALSE,warning=FALSE}
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +
+  geom_violin() +
+  geom_boxplot()
+```
+
 ## Statystyki
 
 ```{r, echo=FALSE,warning=FALSE}
@@ -412,6 +428,7 @@ gg
 
 <img src="https://raw.githubusercontent.com/tylermorganwall/rayshader/master/man/figures/README_three-d-labels-1.png" width="600px" class="center">
 
+Wykresy 3D w **R**: https://github.com/tylermorganwall/rayshader
 
 ## Infografiki
 
