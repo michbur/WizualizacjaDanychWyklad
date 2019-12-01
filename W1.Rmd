@@ -238,6 +238,15 @@ ggplot(iris, aes(x = Species, y = Sepal.Length)) +
 ## Statystyki
 
 ```{r, echo=FALSE,warning=FALSE}
+library(ggbeeswarm)
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +
+  geom_quasirandom(method = "smiley")
+```
+
+
+## Statystyki
+
+```{r, echo=FALSE,warning=FALSE}
 ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species, shape = Species)) +
   geom_point(size = 4)
 ```
