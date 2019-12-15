@@ -249,7 +249,7 @@ p1 <- ggplot(dat, aes(x = cut, y = price)) +
   ggtitle("Poprzednia wersja")
 
 p2 <- ggplot(dat, aes(x = cut, y = price)) +
-  geom_violin() +
+  geom_violin(linetype = "dashed") +
   geom_quasirandom() +
   stat_boxplot(geom = "errorbar") +
   ggtitle("Poprawiona wersja")
@@ -365,7 +365,7 @@ p1 <- ggplot(dat, aes(x = price)) +
 
 p2 <- ggplot(dat, aes(x = price)) +
   geom_histogram(color = "black", fill = "white") +
-  facet_wrap(~ cut, labeller = label_both) +
+  facet_wrap(~ cut, labeller = label_both, nrow = 3) +
   scale_x_continuous("Price [USD]") +
   ggtitle("Poprawiony wykres") 
 
@@ -384,12 +384,12 @@ p1 <- ggplot(dat, aes(x = price)) +
   facet_wrap(~ cut, labeller = label_both) +
   ggtitle("Poprzedni wykres")
 
-p2 <- mutate(dat, price_cat = cut(price, seq(0, 20000, length.out = 11), include.lowest = TRUE)) %>%
+p2 <- mutate(dat, price_cat = cut(price, seq(0, 20000, length.out = 6), include.lowest = TRUE)) %>%
   group_by(price_cat, cut) %>% 
   summarise(n = length(cut)) %>% 
-  ggplot(aes(x = cut, y = price_cat, fill = n)) +
+  ggplot(aes(y = cut, x = price_cat, fill = n)) +
   geom_tile(color = "black") +
-  scale_y_discrete("Price [USD]") + 
+  scale_x_discrete("Price [USD]") + 
   scale_fill_gradient("count", low = "white", high = "black") +
   ggtitle("Poprawiony wykres") 
 
