@@ -1,0 +1,154 @@
+---
+title: "Poprawione przykłady"
+author: "Michał Burdukiewicz"
+date: "15 12 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.height = 9)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(patchwork)
+library(ggbeeswarm)
+theme_set(theme_bw())
+
+```
+
+```{r}
+set.seed(15390)
+dat <- droplevels(diamonds[sample(1L:nrow(diamonds), 100), ])
+```
+
+\newpage
+
+```{r}
+p1 <- ggplot(dat, aes(x = cut, y = price)) +
+  geom_boxplot(outlier.color = NA) +
+  geom_point(position = "jitter") +
+  ggtitle("Poprzednia wersja")
+
+p2 <- ggplot(dat, aes(x = cut, y = price)) +
+  geom_violin() +
+  geom_quasirandom() +
+  stat_boxplot(geom = "errorbar") +
+  ggtitle("Poprawiona wersja")
+
+p1/p2
+
+```
+
+\newpage
+
+```{r}
+p1 <- group_by(dat, cut, clarity) %>% 
+  summarise(count = length(price)) %>% 
+  ggplot(aes(x = cut, y = clarity, fill = count)) +
+  geom_tile(color = "black") +
+  scale_fill_gradient(low = "white", high = "black") +
+  ggtitle("Poprzedni wykres")
+
+p2 <- group_by(dat, cut, clarity) %>% 
+  summarise(count = length(price)) %>% 
+  ggplot(aes(x = cut, y = clarity, fill = count, color = count < max(count)/2, label = count)) +
+  geom_point(color = "black", shape = 21, size = 13) +
+  geom_text() +
+  scale_fill_gradient(low = "white", high = "black") +
+  scale_color_manual(values = c("white", "black"), guide = "none") +
+  ggtitle("Poprawiony wykres")
+
+p1/p2
+```
+
+\newpage
+
+```{r}
+p1 <- group_by(dat, cut, clarity) %>% 
+  summarise(count = length(price)) %>% 
+  ggplot(aes(x = cut, y = clarity, fill = count)) +
+  geom_tile(color = "black") +
+  scale_fill_gradient(low = "white", high = "black") +
+  ggtitle("Poprzedni wykres")
+
+p2 <- group_by(dat, cut, clarity) %>% 
+  summarise(count = length(price)) %>% 
+  ggplot(aes(x = cut, y = clarity, fill = count, label = count, color = count < max(count)/2)) +
+  geom_tile(color = "black") +
+  geom_text() +
+  scale_fill_gradient(low = "white", high = "black") +
+  scale_color_manual(values = c("white", "black"), guide = "none") +
+  ggtitle("Poprzedni wykres") +
+  theme(panel.grid = element_blank())
+
+p1/p2
+```
+
+\newpage
+
+```{r}
+p1 <- ggplot(dat, aes(x = carat, y = price, shape = clarity)) +
+  geom_point() +
+  ggtitle("Poprzedni wykres")
+
+p2 <- ggplot(dat, aes(x = carat, y = price)) +
+  geom_point() +
+  scale_y_log10("price (log-scale)") +
+  facet_wrap(~ clarity, labeller = label_both) +
+  ggtitle("Poprawiony wykres") 
+
+p1/p2
+```
+
+\newpage
+
+```{r}
+p1 <- ggplot(dat, aes(x = carat, y = price, shape = cut)) +
+  geom_point() +
+  facet_wrap(~ clarity, labeller = label_both) +
+  ggtitle("Poprzedni wykres")
+
+p2 <- ggplot(dat, aes(x = carat, y = price, shape = cut)) +
+  geom_point() +
+  facet_wrap(~ clarity, labeller = label_both) +
+  scale_y_log10("price (log-scale)") +
+  ggtitle("Poprawiony wykres") 
+
+p1/p2
+```
+
+\newpage
+
+```{r}
+p1 <- ggplot(dat, aes(x = price)) +
+  geom_histogram() +
+  facet_wrap(~ cut, labeller = label_both)
+
+p2 <- ggplot(dat, aes(x = price)) +
+  geom_histogram(color = "black", fill = "white") +
+  facet_wrap(~ cut, labeller = label_both) +
+  scale_x_continuous("Price [USD]") +
+  ggtitle("Poprawiony wykres") 
+
+p1/p2
+```
+
+\newpage
+
+```{r}
+p1 <- ggplot(dat, aes(x = price)) +
+  geom_histogram() +
+  facet_wrap(~ cut, labeller = label_both) +
+  ggtitle("Poprzedni wykres")
+
+p2 <- mutate(dat, price_cat = cut(price, seq(0, 20000, length.out = 11), include.lowest = TRUE)) %>%
+  group_by(price_cat, cut) %>% 
+  summarise(n = length(cut)) %>% 
+  ggplot(aes(x = cut, y = price_cat, fill = n)) +
+  geom_tile(color = "black") +
+  scale_y_discrete("Price [USD]") + 
+  scale_fill_gradient("count", low = "white", high = "black") +
+  ggtitle("Poprawiony wykres") 
+
+p1/p2
+```
